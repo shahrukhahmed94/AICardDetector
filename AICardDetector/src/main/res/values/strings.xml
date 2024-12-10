@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">IDCardDetectionApp</string>
+    <string name="capture_button_description">Capture Image Button</string>
+    <string name="object_icon_description">Object Counter Icon</string>
+</resources>
