@@ -15,6 +15,8 @@ fun RequestPermissions() {
         android.Manifest.permission.CAMERA
     )
 
+
+
     // External storage write permission state for SDK <= 29
     val storagePermissionState = if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
         rememberPermissionState(
@@ -27,8 +29,13 @@ fun RequestPermissions() {
     val isStorageGranted = storagePermissionState?.status?.isGranted ?: true
 
     if (!isCameraGranted || !isStorageGranted) {
+
+
         // Automatically launch the permission request when the composable appears on the screen
         LaunchedEffect(cameraPermissionState, storagePermissionState) {
+
+
+
             cameraPermissionState.launchPermissionRequest()
             storagePermissionState?.launchPermissionRequest()
         }

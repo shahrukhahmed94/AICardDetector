@@ -6,6 +6,9 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.view.CameraController
+import androidx.camera.view.LifecycleCameraController
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -41,6 +44,8 @@ import com.shahrukh.aicarddetector.libexposer.ObjectDetectionManagerFactory.isIm
 import com.shahrukh.aicarddetector.manager.ObjectDetectionManagerImpl
 import com.shahrukh.aicarddetector.presentation.common.ImageButton
 import com.shahrukh.aicarddetector.presentation.home.components.CameraPreview
+import com.shahrukh.aicarddetector.presentation.home.components.RequestPermissions
+import com.shahrukh.aicarddetector.presentation.utils.CameraFrameAnalyzer
 import com.shahrukh.aicarddetector.presentation.utils.Constants
 import com.shahrukh.aicarddetector.presentation.utils.Dimens
 import com.shahrukh.aicarddetector.presentation.utils.ImageScalingUtils
@@ -54,7 +59,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
 
-        enableEdgeToEdge()
+
+       // enableEdgeToEdge()
         setContent {
             AICardDetectorTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
@@ -62,6 +68,7 @@ class MainActivity : ComponentActivity() {
                         name = "Android",
                         modifier = Modifier.padding(innerPadding)
                     )*/
+
                     CardDetectorScreen()
                 }
             }
@@ -73,7 +80,18 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun CardDetectorScreen() {
 
+
+
     val context = LocalContext.current
+
+    var isPermissionsGranted by remember { mutableStateOf(false) }
+
+    // Request permissions and handle the result
+   RequestPermissions()
+
+
+
+
 
 
 
@@ -99,50 +117,173 @@ fun CardDetectorScreen() {
     val screenWidth = LocalContext.current.resources.displayMetrics.widthPixels * 1f
     val screenHeight = LocalContext.current.resources.displayMetrics.heightPixels * 1f
 
+    // Global state for cameraFrameAnalyzer and cameraController
+    var cameraFrameAnalyzer by remember { mutableStateOf<CameraFrameAnalyzer?>(null) }
+    var cameraController by remember { mutableStateOf<LifecycleCameraController?>(null) }
 
-    Box(
+
+
+
+    var detections2 by remember {
+        mutableStateOf(emptyList<com.shahrukh.aicarddetector.domain.model.Detection>())
+    }
+
+    LaunchedEffect(detections2) {}
+
+    LaunchedEffect(Unit) {
+        Log.d("CameraFactory", "Initializing CameraFrameAnalyzerFactory")
+        CameraFrameAnalyzerFactory.init(objectDetectionManager)
+
+        if (CameraFrameAnalyzerFactory.isInitialized()) {
+            Log.d("CameraFactory", "CameraFrameAnalyzerFactory initialized successfully.")
+            isFactoryInitialized = true
+            cameraFrameAnalyzer = CameraFrameAnalyzerFactory.createAICardDetector(
+                onObjectDetectionResults = { detections2 = it },
+                confidenceScoreState = confidenceScoreState
+            )
+
+
+            cameraController = ObjectDetectionManagerFactory.prepareCameraController(
+                context,
+                cameraFrameAnalyzer!!
+            )
+
+            // Ensure cameraController is successfully initialized
+            cameraController?.let {
+                Log.d("CameraFactory", "CameraController initialized successfully.")
+
+                // Now, create the Preview and ImageAnalysis use cases and bind them
+
+
+
+            } ?: Log.e("CameraFactory", "Failed to initialize CameraController.")
+        } else {
+            Log.e("CameraFactory", "Failed to initialize CameraFrameAnalyzerFactory.")
+        }
+    }
+
+
+
+        Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        var detections by remember {
-            mutableStateOf(emptyList<Detection>())
-        }
-
-
-
-        LaunchedEffect(detections) {}
-
-
-// Initialize the CameraFrameAnalyzerFactory inside LaunchedEffect
-        LaunchedEffect(Unit) {
-            CameraFrameAnalyzerFactory.init(objectDetectionManager)
-            isFactoryInitialized =
-                CameraFrameAnalyzerFactory.isInitialized() // Check initialization
-        }
-
-        val cameraFrameAnalyzer = remember {
-            if (isFactoryInitialized) {
-                CameraFrameAnalyzerFactory.createAICardDetector(
-                    onObjectDetectionResults = {
-                        detections = it
-                    },
-                    confidenceScoreState = confidenceScoreState
-                )
-            } else {
-                null // Handle the case where factory isn't initialized yet
-            }
-        }
-
-
-
-
 
 
 
         // Combined Column for Camera Preview, CameraOverlay & Bottom UI
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(color = colorResource(id = R.color.gray_900)),
+        ) {
+            // Camera Preview Column with CameraOverlay
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(0.8f)
+            ) {
+                // Camera Preview
+                remember {
+                    cameraController
+                }?.let {
+                    CameraPreview(
+                        controller = it  ,
+                        modifier = Modifier.fillMaxSize(),
+                        onPreviewSizeChanged = { newSize ->
+                            previewSizeState.value = newSize
+
+                            // Get Scale-Factors along X and Y depending on size of camera-preview
+                            val scaleFactors = ImageScalingUtils.getScaleFactors(
+                                newSize.width,
+                                newSize.height
+                            )
+
+                            scaleFactorX = scaleFactors[0]
+                            scaleFactorY = scaleFactors[1]
+
+                            Log.d(
+                                "HomeViewModel",
+                                "HomeScreen() called with: newSize = $scaleFactorX & scaleFactorY = $scaleFactorY"
+                            )
+                        }
+                    )
+                }
+
+                // Add CameraOverlay here so it overlays on top of CameraPreview
 
 
 
+                com.shahrukh.aicarddetector.presentation.home.components.CameraOverlay(detections = detections2)
+                /**CameraOverlay(detections = detections) */
+            }
 
+            // Bottom column with Capture-Image and Threshold Level Slider
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(0.2f)
+                    .padding(top = Dimens.Padding8dp),
+                verticalArrangement = Arrangement.SpaceAround
+            ) {
+                ImageButton(
+                    drawableResourceId = R.drawable.ic_capture,
+                    contentDescriptionResourceId = R.string.capture_button_description,
+                    modifier = Modifier
+                        .size(Dimens.CaptureButtonSize)
+                        .clip(CircleShape)
+                        .align(Alignment.CenterHorizontally)
+                        .clickable {
+                            // Capture and Saves Photo
+                            /** viewModel.capturePhoto(
+                            context = context,
+                            navController = navController,
+                            cameraController = cameraController,
+                            screenWidth,
+                            screenHeight,
+                            detections
+                            )*/
+
+                            cameraController?.let {
+                                ObjectDetectionManagerFactory.capturePhoto(
+                                    context = context,
+                                    //  navController = navController,
+                                    cameraController = it,
+                                    screenWidth,
+                                    screenHeight,
+                                    detections2
+                                )
+                            }
+
+
+                            // Show toast of Save State
+
+                        }
+                )
+
+
+            }
+        }
+
+        // Column with rotate-camera and detected object count Composable (Overlapping UI)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .zIndex(1f)
+                .padding(top = Dimens.Padding32dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+
+
+                // Detected Object Count Composable
+                /**  ObjectCounter(objectCount = detections.size) */
+                com.shahrukh.aicarddetector.presentation.home.components.ObjectCounter(objectCount = detections2.size)
+            }
+        }
 
 
 

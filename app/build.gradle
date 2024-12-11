@@ -58,6 +58,10 @@ dependencies {
     implementation libs.androidx.material3
     implementation project(':AICardDetector')
 
+    // Accompanist Permission manager Dependency
+    implementation("com.google.accompanist:accompanist-permissions:0.33.2-alpha")
+
+
     testImplementation libs.junit
     androidTestImplementation libs.androidx.junit
     androidTestImplementation libs.androidx.espresso.core

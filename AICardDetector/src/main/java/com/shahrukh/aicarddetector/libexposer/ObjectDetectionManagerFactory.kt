@@ -61,12 +61,14 @@ object ObjectDetectionManagerFactory {
 
 
 
+        Log.d("Camera Frame Analyzer ", "${cameraFrameAnalyzer.toString()}")
 
         Log.d("Tag", "prepareCameraController() called")
         return LifecycleCameraController(context).apply {
             setEnabledUseCases(
                 CameraController.IMAGE_ANALYSIS or
                         CameraController.IMAGE_CAPTURE
+
             )
             setImageAnalysisAnalyzer(
                 ContextCompat.getMainExecutor(context),

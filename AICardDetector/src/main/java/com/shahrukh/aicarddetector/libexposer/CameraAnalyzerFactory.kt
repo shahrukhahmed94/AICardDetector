@@ -1,5 +1,6 @@
 package com.shahrukh.aicarddetector.libexposer
 
+import android.util.Log
 import androidx.compose.runtime.State
 import com.shahrukh.aicarddetector.domain.manager.ObjectDetectionManager
 import com.shahrukh.aicarddetector.domain.model.Detection
@@ -41,6 +42,8 @@ object CameraFrameAnalyzerFactory {
         onObjectDetectionResults: (List<Detection>) -> Unit,
         confidenceScoreState: State<Float>
     ): CameraFrameAnalyzer {
+
+        Log.i("Factory Analyzer","Create AI Card called")
         val manager = objectDetectionManager
             ?: throw IllegalStateException("CameraFrameAnalyzerFactory has not been initialized")
 
