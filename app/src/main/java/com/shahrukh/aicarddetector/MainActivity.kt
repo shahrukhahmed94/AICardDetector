@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
@@ -43,6 +44,7 @@ import com.shahrukh.aicarddetector.libexposer.ObjectDetectionManagerFactory
 import com.shahrukh.aicarddetector.libexposer.ObjectDetectionManagerFactory.isImageSavedStateFlow
 import com.shahrukh.aicarddetector.manager.ObjectDetectionManagerImpl
 import com.shahrukh.aicarddetector.presentation.common.ImageButton
+import com.shahrukh.aicarddetector.presentation.home.components.CameraOverlay
 import com.shahrukh.aicarddetector.presentation.home.components.CameraPreview
 import com.shahrukh.aicarddetector.presentation.home.components.RequestPermissions
 import com.shahrukh.aicarddetector.presentation.utils.CameraFrameAnalyzer
@@ -76,25 +78,62 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-
 @Composable
 fun CardDetectorScreen() {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // Camera states
+    var cameraController by remember { mutableStateOf<LifecycleCameraController?>(null) }
+    var cameraFrameAnalyzer by remember { mutableStateOf<CameraFrameAnalyzer?>(null) }
+    val detections = remember { mutableStateOf<List<Detection>>(emptyList()) }
+
+    val confidenceScoreState = remember { mutableFloatStateOf(Constants.INITIAL_CONFIDENCE_SCORE) }
 
 
+    // Initialize CameraController and FrameAnalyzer
+    LaunchedEffect(Unit) {
+        val objectDetectionManager = ObjectDetectionManagerImpl(context)
+        CameraFrameAnalyzerFactory.init(objectDetectionManager)
+
+        if (CameraFrameAnalyzerFactory.isInitialized()) {
+            cameraFrameAnalyzer = CameraFrameAnalyzerFactory.createAICardDetector(
+                onObjectDetectionResults = { detections.value = it },
+                confidenceScoreState = confidenceScoreState
+            )
+
+            cameraController = ObjectDetectionManagerFactory.prepareCameraController(
+                context,
+                cameraFrameAnalyzer!!
+            )
+            cameraController?.bindToLifecycle(lifecycleOwner)
+        }
+    }
+
+    // UI
+    Box(modifier = Modifier.fillMaxSize()) {
+        cameraController?.let {
+            CameraPreview(
+                controller = it,
+                modifier = Modifier.fillMaxSize(),
+                onPreviewSizeChanged = { /* Handle size changes */ }
+            )
+        }
+        CameraOverlay(detections = detections.value)
+    }
+}
+
+
+
+/**@Composable
+fun CardDetectorScreen() {
 
     val context = LocalContext.current
 
     var isPermissionsGranted by remember { mutableStateOf(false) }
 
     // Request permissions and handle the result
-   RequestPermissions()
-
-
-
-
-
-
-
+    RequestPermissions()
 
     // Preparing Image Analyzer using the factory
     // Initialize the ObjectDetectionManager
@@ -145,6 +184,7 @@ fun CardDetectorScreen() {
 
             cameraController = ObjectDetectionManagerFactory.prepareCameraController(
                 context,
+
                 cameraFrameAnalyzer!!
             )
 
@@ -290,7 +330,7 @@ fun CardDetectorScreen() {
     }
 
 }
-
+*/
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     Text(

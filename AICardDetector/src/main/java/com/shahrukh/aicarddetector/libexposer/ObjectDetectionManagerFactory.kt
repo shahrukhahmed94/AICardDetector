@@ -15,12 +15,14 @@ import android.provider.MediaStore
 import android.util.DisplayMetrics
 import android.util.Log
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
 import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.viewModelScope
 import com.shahrukh.aicarddetector.domain.manager.ObjectDetectionManager
 import com.shahrukh.aicarddetector.domain.model.Detection
@@ -53,6 +55,8 @@ object ObjectDetectionManagerFactory {
     fun create(context: Context): ObjectDetectionManager {
         return ObjectDetectionManagerImpl(context)
     }
+
+
 
     fun prepareCameraController(
         context: Context,
