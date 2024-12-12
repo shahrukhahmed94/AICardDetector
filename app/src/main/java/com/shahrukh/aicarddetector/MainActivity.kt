@@ -88,6 +88,10 @@ fun CardDetectorScreen() {
     var cameraFrameAnalyzer by remember { mutableStateOf<CameraFrameAnalyzer?>(null) }
     val detections = remember { mutableStateOf<List<Detection>>(emptyList()) }
 
+    val screenWidth = LocalContext.current.resources.displayMetrics.widthPixels * 1f
+    val screenHeight = LocalContext.current.resources.displayMetrics.heightPixels * 1f
+
+
     val confidenceScoreState = remember { mutableFloatStateOf(Constants.INITIAL_CONFIDENCE_SCORE) }
 
 
@@ -111,17 +115,70 @@ fun CardDetectorScreen() {
     }
 
     // UI
-    Box(modifier = Modifier.fillMaxSize()) {
-        cameraController?.let {
-            CameraPreview(
-                controller = it,
-                modifier = Modifier.fillMaxSize(),
-                onPreviewSizeChanged = { /* Handle size changes */ }
-            )
+    Column(
+        modifier = Modifier
+        .fillMaxSize()
+        .background(color = colorResource(id = R.color.gray_900)),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .weight(0.85f)
+
+        ) {
+            cameraController?.let {
+                CameraPreview(
+                    controller = it,
+                    modifier = Modifier.fillMaxSize(),
+                    onPreviewSizeChanged = { /* Handle size changes */ }
+                )
+            }
+            CameraOverlay(detections = detections.value)
         }
-        CameraOverlay(detections = detections.value)
+        // Bottom column with Capture-Image and Threshold Level Slider
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(0.15f)
+                .padding(top = Dimens.Padding8dp),
+            verticalArrangement = Arrangement.SpaceAround
+        ) {
+            ImageButton(
+                drawableResourceId = R.drawable.ic_capture,
+                contentDescriptionResourceId = R.string.capture_button_description,
+                modifier = Modifier
+                    .size(Dimens.CaptureButtonSize)
+                    .clip(CircleShape)
+                    .align(Alignment.CenterHorizontally)
+                    .clickable {
+                        // Capture and Saves Photo
+
+                        cameraController?.let {
+                            ObjectDetectionManagerFactory.capturePhoto(
+                                context = context,
+                                cameraController = it,
+                                screenWidth,
+                                screenHeight,
+                                detections.value
+                            )
+                        }
+
+
+                        // Show toast of Save State
+
+                    }
+            )
+
+
+        }
     }
-}
+
+
+
+
+
+    }
+
 
 
 
