@@ -38,6 +38,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -151,6 +152,10 @@ object ObjectDetectionManagerFactory {
      * @param context The application's context.
      * @param cameraController The lifecycle-aware camera controller to manage the photo capture.
      */
+
+
+
+
     fun capturePhoto(
         context: Context,
         // navController: NavController,
@@ -158,7 +163,7 @@ object ObjectDetectionManagerFactory {
         screenWidth: Float,
         screenHeight: Float,
         detections: List<Detection>
-    ) {
+    )  {
 
         cameraController.takePicture(
             ContextCompat.getMainExecutor(context),
@@ -223,6 +228,7 @@ object ObjectDetectionManagerFactory {
                             }
                         }
                     }
+                    //return capturedImageBit
                 }
 
                 override fun onError(exception: ImageCaptureException) {
@@ -236,67 +242,6 @@ object ObjectDetectionManagerFactory {
 
 
 
-    /**
-     * Saves the provided bitmap to the device's external storage.
-     *
-     * This function saves the bitmap in the device's picture directory and gives it a unique name based on the current system time.
-     * For devices running Android API 29 and above, the bitmap is saved using the MediaStore API which ensures that the saved image
-     * is immediately visible in gallery apps without the need for any additional scanning.
-     *
-     * @param context The application context used for content resolution.
-     * @param capturedImageBitmap The bitmap image to be saved.
-     */
-
-
-
-    /**fun saveBitmapToDevice  (
-    context: Context,
-    capturedImageBitmap: Bitmap
-    )  {
-    viewModelScope.launch(Dispatchers.IO) {
-    try {
-    Log.d(TAG, "saveBitmapToDevice() called for Version = ${Build.VERSION.SDK_INT}")
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-    val values = ContentValues().apply {
-    put(MediaStore.Images.Media.DISPLAY_NAME, generateImageName())
-    put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
-    put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
-    }
-
-    val uri: Uri? = context.contentResolver.insert(
-    MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values
-    )
-
-    uri?.let {
-    context.contentResolver.openOutputStream(it).use { outputStream ->
-    if (outputStream != null) {
-    capturedImageBitmap.compress(
-    Bitmap.CompressFormat.JPEG,
-    100,
-    outputStream
-    )
-
-    capturedImageBit = capturedImageBitmap
-    }
-    outputStream?.flush()
-    outputStream?.close()
-    }
-    }
-
-
-
-
-
-    // Update _isImageSavedStateFlow value to true
-    isPhotoSuccessfullySaved(true)
-    }
-    } catch (exception: Exception) {
-    Log.e(TAG, "saveBitmapToDevice() called with: exception = $exception")
-    isPhotoSuccessfullySaved(false)
-    }
-
-    }
-    }*/
 
     suspend fun saveBitmapToDevice(
         context: Context,

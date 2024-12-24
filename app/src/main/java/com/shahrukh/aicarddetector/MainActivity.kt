@@ -101,6 +101,7 @@ fun CardDetectorScreen() {
         CameraFrameAnalyzerFactory.init(objectDetectionManager)
 
         if (CameraFrameAnalyzerFactory.isInitialized()) {
+
             cameraFrameAnalyzer = CameraFrameAnalyzerFactory.createAICardDetector(
                 onObjectDetectionResults = { detections.value = it },
                 confidenceScoreState = confidenceScoreState
