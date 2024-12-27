@@ -62,6 +62,7 @@ class MainActivity : ComponentActivity() {
 
 
 
+
        // enableEdgeToEdge()
         setContent {
             AICardDetectorTheme {
@@ -95,6 +96,7 @@ fun CardDetectorScreen() {
     val confidenceScoreState = remember { mutableFloatStateOf(Constants.INITIAL_CONFIDENCE_SCORE) }
 
 
+    RequestPermissions()
     // Initialize CameraController and FrameAnalyzer
     LaunchedEffect(Unit) {
         val objectDetectionManager = ObjectDetectionManagerImpl(context)
@@ -118,8 +120,8 @@ fun CardDetectorScreen() {
     // UI
     Column(
         modifier = Modifier
-        .fillMaxSize()
-        .background(color = colorResource(id = R.color.gray_900)),
+            .fillMaxSize()
+            .background(color = colorResource(id = R.color.gray_900)),
     ) {
         Box(
             modifier = Modifier
