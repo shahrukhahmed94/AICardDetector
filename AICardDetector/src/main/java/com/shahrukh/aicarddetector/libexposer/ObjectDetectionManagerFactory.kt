@@ -43,6 +43,9 @@ import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 import kotlin.random.Random
 
 object ObjectDetectionManagerFactory {
@@ -156,7 +159,7 @@ object ObjectDetectionManagerFactory {
 
 
 
-    fun capturePhoto(
+   /** fun capturePhoto(
         context: Context,
         // navController: NavController,
         cameraController: LifecycleCameraController,
@@ -238,7 +241,83 @@ object ObjectDetectionManagerFactory {
                 }
             }
         )
-    }
+    }*/
+
+   suspend fun capturePhoto(
+       context: Context,
+       cameraController: LifecycleCameraController,
+       screenWidth: Float,
+       screenHeight: Float,
+       detections: List<Detection>
+   ): Bitmap? = suspendCoroutine { continuation ->
+       cameraController.takePicture(
+           ContextCompat.getMainExecutor(context),
+           object : ImageCapture.OnImageCapturedCallback() {
+
+               override fun onCaptureSuccess(image: ImageProxy) {
+                   super.onCaptureSuccess(image)
+                   Log.d("TAG", "onCaptureSuccess() called for capturePhoto")
+
+                   try {
+                       val rotatedImageMatrix = Matrix().apply {
+                           postRotate(image.imageInfo.rotationDegrees.toFloat())
+                       }
+
+                       // Convert the captured image to a Bitmap
+                       val rotatedBitmap = Bitmap.createBitmap(
+                           image.toBitmap(),
+                           0,
+                           0,
+                           image.width,
+                           image.height,
+                           rotatedImageMatrix,
+                           true
+                       )
+
+                       val detection = detections.firstOrNull()
+                       if (detection != null) {
+                           val croppedBitmap = cropImage(
+                               rotatedBitmap,
+                               detection.boundingBox,
+                               detection.tensorImageWidth,
+                               detection.tensorImageHeight
+                           )
+
+                           // Save cropped bitmap asynchronously
+                           CoroutineScope(Dispatchers.IO).launch {
+                               try {
+                                   saveBitmapToDevice(context, croppedBitmap)
+                                   withContext(Dispatchers.Main) {
+                                       continuation.resume(croppedBitmap)
+                                   }
+                               } catch (e: Exception) {
+                                   Log.e("TAG", "Failed to save or process the image: $e")
+                                   withContext(Dispatchers.Main) {
+                                       continuation.resumeWithException(e)
+                                   }
+                               }
+                           }
+                       } else {
+                           Log.e("TAG", "No detection found.")
+                           continuation.resume(null)
+                       }
+                   } catch (e: Exception) {
+                       Log.e("TAG", "Exception in onCaptureSuccess: $e")
+                       continuation.resumeWithException(e)
+                   } finally {
+                       image.close()
+                   }
+               }
+
+               override fun onError(exception: ImageCaptureException) {
+                   super.onError(exception)
+                   Log.e("TAG", "onError() called for capturePhoto with: exception = $exception")
+                   continuation.resumeWithException(exception)
+               }
+           }
+       )
+   }
+
 
 
 

@@ -52,6 +52,9 @@ import com.shahrukh.aicarddetector.presentation.utils.Constants
 import com.shahrukh.aicarddetector.presentation.utils.Dimens
 import com.shahrukh.aicarddetector.presentation.utils.ImageScalingUtils
 import com.shahrukh.aicarddetector.ui.theme.AICardDetectorTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -146,7 +149,7 @@ fun CardDetectorScreen() {
                 .padding(top = Dimens.Padding8dp),
             verticalArrangement = Arrangement.SpaceAround
         ) {
-            ImageButton(
+           /** ImageButton(
                 drawableResourceId = R.drawable.ic_capture,
                 contentDescriptionResourceId = R.string.capture_button_description,
                 modifier = Modifier
@@ -170,7 +173,43 @@ fun CardDetectorScreen() {
                         // Show toast of Save State
 
                     }
+            )*/
+            ImageButton(
+                drawableResourceId = R.drawable.ic_capture,
+                contentDescriptionResourceId = R.string.capture_button_description,
+                modifier = Modifier
+                    .size(Dimens.CaptureButtonSize)
+                    .clip(CircleShape)
+                    .align(Alignment.CenterHorizontally)
+                    .clickable {
+                        // Ensure you have a CoroutineScope (e.g., lifecycleScope or a ViewModel scope)
+                        cameraController?.let {
+                            CoroutineScope(Dispatchers.Main).launch {
+                                val croppedBitmap = ObjectDetectionManagerFactory.capturePhoto(
+                                    context = context,
+                                    cameraController = it,
+                                    screenWidth = screenWidth,
+                                    screenHeight = screenHeight,
+                                    detections = detections.value
+                                )
+
+                                croppedBitmap?.let { bitmap ->
+                                    // Use the cropped bitmap here, for example:
+                                    // Show it in a UI
+                                    // Save it to the device
+                                    Log.d("BitmapInfo", "Width: ${bitmap.width}, Height: ${bitmap.height}")
+                                    Log.d("BitmapInfo", "Config: ${bitmap.config}")
+                                    Log.d("BitmapInfo", "Byte Count: ${bitmap.allocationByteCount}")
+
+                                    Toast.makeText(context, "Photo captured successfully!", Toast.LENGTH_SHORT).show()
+                                } ?: run {
+                                    Toast.makeText(context, "Failed to capture photo.", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                    }
             )
+
 
 
         }

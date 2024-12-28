@@ -78,6 +78,9 @@ dependencies {
     implementation("com.google.accompanist:accompanist-permissions:0.33.2-alpha")
 
 
+    // Kotlin Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
 
 
 
