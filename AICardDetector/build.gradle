@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.jetbrains.kotlin.android)
-    id ('maven-publish')
+    id ("maven-publish")
 
 
 
@@ -95,4 +95,20 @@ dependencies {
     testImplementation libs.junit
     androidTestImplementation libs.androidx.junit
     androidTestImplementation libs.androidx.espresso.core
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'com.github.shahrukhahmed94'
+            artifactId = 'com-shahrukhahmed94-aicarddetector'
+            version = "1.0.1"
+            pom {
+                description = 'First release'
+            }
+        }
+    }
+    repositories {
+        mavenLocal()
+    }
 }
