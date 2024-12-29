@@ -62,8 +62,7 @@ dependencies {
 
 
     //My Lib
-    //implementation("com.github.shahrukhahmed94:AICardDetector:1.0.1")
-
+   // implementation("com.github.shahrukhahmed94:AICardDetector:1.0.2")
     // Accompanist Permission manager Dependency
     implementation("com.google.accompanist:accompanist-permissions:0.33.2-alpha")
 

@@ -97,7 +97,7 @@ dependencies {
     androidTestImplementation libs.androidx.espresso.core
 }
 
-publishing {
+/**publishing {
     publications {
         maven(MavenPublication) {
             groupId = 'com.github.shahrukhahmed94'
@@ -110,6 +110,19 @@ publishing {
     }
     repositories {
         mavenLocal()
+    }
+}*/
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                from components.release
+
+                groupId = 'com.github.shahrukhahmed94'
+                artifactId = 'AICardDetector'
+                version = '1.0.3'
+            }
+        }
     }
 }
 
