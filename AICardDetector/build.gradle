@@ -101,10 +101,10 @@ publishing {
     publications {
         maven(MavenPublication) {
             groupId = 'com.github.shahrukhahmed94'
-            artifactId = 'com-shahrukhahmed94-aicarddetector'
-            version = "1.0.1"
+            artifactId = 'AICardDetector'
+            version = "1.0.2"
             pom {
-                description = 'First release'
+                description = 'Second release'
             }
         }
     }
@@ -112,3 +112,4 @@ publishing {
         mavenLocal()
     }
 }
+
