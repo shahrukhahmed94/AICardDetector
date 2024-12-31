@@ -25,16 +25,19 @@ dependencyResolutionManagement {
         maven { url 'https://jitpack.io' }
     }
 }
+```
 
-This will allow you to access dependencies hosted on JitPack.
+ This will allow you to access dependencies hosted on JitPack.
 
-### Step2 Add the Dependency
+### Step2: Add the Dependency
 
 In your app's build.gradle file, add the following dependency:
 
+```
 dependencies {
     implementation 'com.github.shahrukhahmed94:AICardDetector:1.0.3'
 }
+```
 
 Make sure you sync your project with Gradle after adding the dependency to complete the integration.
 
