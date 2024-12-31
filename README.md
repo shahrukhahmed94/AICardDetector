@@ -2,6 +2,10 @@
 
 AI Card Detector is a real-time card detection library designed to detect and process cards using TensorFlow Lite and CameraX. It allows seamless integration of card detection capabilities into your applications for KYC (Know Your Customer) purposes and other identity verification scenarios. The library is lightweight, fast, and optimized for mobile environments.
 
+## Demo 
+
+[Watch the Demo Video](https://1drv.ms/v/c/df5a2072805306a7/EXUdAFVD9OZKi9d1vHWOmK8BCFX56RKB6GTY8asDN6PWfQ)
+
 ## Features
 
 - Real-time card detection using TensorFlow Lite.
