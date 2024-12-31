@@ -227,3 +227,58 @@ Ensure that your app requests the necessary camera permissions by including the 
 - Card Detection: The real-time card detection is handled by initializing the CameraFrameAnalyzer and ObjectDetectionManager, which process each camera frame to detect cards.
 - Capture Image: When the user clicks the capture button, it processes the current frame, crops the detected card region, and logs the captured image's details.
 By following these steps, you’ll have a functional real-time card detection system integrated into your Android application.
+
+## Contributions
+
+We welcome contributions to improve the AI Card Detector library! If you would like to contribute, please follow the steps below:
+
+### How to Contribute
+
+- Fork the repository: Click the "Fork" button on the top-right of this page to create a copy of this repository in your own GitHub account.
+
+- Clone your fork: Clone your forked repository to your local machine using the following command:
+
+```
+git clone https://github.com/your-username/AICardDetector.git
+```
+
+- Create a branch: Create a new branch for your changes. You can do this by running:
+```
+git checkout -b feature-branch-name
+
+```
+
+- Make changes: Implement your changes or fixes. Be sure to follow the coding style and conventions used in the project.
+
+- Commit your changes: Once you’ve made your changes, commit them with a descriptive message:
+
+```
+git commit -m "Describe your changes here"
+
+```
+- Push your changes: Push your changes to your forked repository:
+
+```
+
+git push origin feature-branch-name
+
+```
+- Create a Pull Request: Go to the original repository on GitHub and open a pull request from your feature branch to the main branch of the original repository.
+
+## Code of Conduct
+
+Please adhere to the following guidelines when contributing to this project:
+
+- Be respectful: Treat others with respect and courtesy. Our community thrives when everyone feels welcome.
+- Follow project guidelines: Ensure your code aligns with the project's style and structure. Follow any contribution-specific guidelines in the project.
+- Write tests: If applicable, include tests to cover your changes, ensuring they don’t break existing functionality.
+- Document your changes: Update documentation (README, comments, etc.) if your changes affect how the library works or its usage.
+
+## Reporting Issues
+
+If you find a bug or have an enhancement request, feel free to open an issue in the repository. Please provide as much detail as possible, including:
+
+- Steps to reproduce the issue.
+- Device information (model, OS version).
+- Log files or error messages (if any).
+- Screenshots (if applicable).
