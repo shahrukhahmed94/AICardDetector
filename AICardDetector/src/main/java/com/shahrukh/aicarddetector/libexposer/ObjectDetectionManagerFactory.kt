@@ -143,6 +143,42 @@ object ObjectDetectionManagerFactory {
     }
 
 
+    fun cropPersistentImage(bitmap: Bitmap, boundingBox: RectF, screenWidth: Float, screenHeight: Float): Bitmap {
+
+        val originalWidth = bitmap.width
+        val originalHeight = bitmap.height
+
+        // Calculate scaling factors based on the screen size vs. bitmap size
+        val scaleX = originalWidth / screenWidth
+        val scaleY = originalHeight / screenHeight
+
+        // Convert bounding box coordinates to bitmap coordinates
+        val left = (boundingBox.left * scaleX).toInt()
+        val top = (boundingBox.top * scaleY).toInt()
+        val right = (boundingBox.right * scaleX).toInt()
+        val bottom = (boundingBox.bottom * scaleY).toInt()
+
+        // Ensure dimensions are within bounds
+        val width = (right - left).coerceAtLeast(1)
+        val height = (bottom - top).coerceAtLeast(1)
+
+        // Ensure the cropping rectangle is within the bitmap bounds
+        val adjustedLeft = left.coerceIn(0, originalWidth - 1)
+        val adjustedTop = top.coerceIn(0, originalHeight - 1)
+        val adjustedRight = (adjustedLeft + width).coerceAtMost(originalWidth)
+        val adjustedBottom = (adjustedTop + height).coerceAtMost(originalHeight)
+
+        // Crop the image
+        return Bitmap.createBitmap(
+            bitmap,
+            adjustedLeft,
+            adjustedTop,
+            adjustedRight - adjustedLeft,
+            adjustedBottom - adjustedTop
+        )
+    }
+
+
 
     /**
      * Captures a photo using the provided camera controller and processes the captured image.
@@ -317,6 +353,97 @@ object ObjectDetectionManagerFactory {
            }
        )
    }
+
+    suspend fun capturePersistentPhoto(
+        context: Context,
+        cameraController: LifecycleCameraController,
+        screenWidth: Float,
+        screenHeight: Float,
+        bottomMargin: Float // The bottom margin is provided to adjust the capture box position
+    ): Bitmap? = suspendCoroutine { continuation ->
+        cameraController.takePicture(
+            ContextCompat.getMainExecutor(context),
+            object : ImageCapture.OnImageCapturedCallback() {
+
+                override fun onCaptureSuccess(image: ImageProxy) {
+                    super.onCaptureSuccess(image)
+                    Log.d("TAG", "onCaptureSuccess() called for capturePersistentPhoto")
+
+                    try {
+                        val rotatedImageMatrix = Matrix().apply {
+                            postRotate(image.imageInfo.rotationDegrees.toFloat())
+                        }
+
+                        // Convert the captured image to a Bitmap
+                        val rotatedBitmap = Bitmap.createBitmap(
+                            image.toBitmap(),
+                            0,
+                            0,
+                            image.width,
+                            image.height,
+                            rotatedImageMatrix,
+                            true
+                        )
+
+                        // Define the persistent detection box's size and position
+                        val fixedWidth = 600f  // Width of the persistent box
+                        val fixedHeight = 420f // Height of the persistent box
+                       // val dynamicTop = ((screenHeight - fixedHeight) / 2f) - bottomMargin  // Adjust top position based on margin
+
+                        val dynamicTop = ((screenHeight - fixedHeight) / 2f) - bottomMargin
+
+
+                        val left = 50f  // Left margin for the persistent box
+
+                        Log.i("Dynamic Top Lib:",dynamicTop.toString())
+                        // Define the bounding box for cropping (use the same dimensions as the detection box)
+                        val boundingBox = RectF(
+                            left,
+                            dynamicTop + 80f,
+                            left + fixedWidth,
+
+                            dynamicTop + fixedHeight
+                        )
+
+                        // Crop the image based on the bounding box
+                        val croppedBitmap = cropPersistentImage(
+                            rotatedBitmap,
+                            boundingBox,
+                            screenWidth,
+                            screenHeight
+                        )
+
+                        // Save cropped bitmap asynchronously
+                        CoroutineScope(Dispatchers.IO).launch {
+                            try {
+                                saveBitmapToDevice(context, croppedBitmap)
+                                withContext(Dispatchers.Main) {
+                                    continuation.resume(croppedBitmap)
+                                }
+                            } catch (e: Exception) {
+                                Log.e("TAG", "Failed to save or process the image: $e")
+                                withContext(Dispatchers.Main) {
+                                    continuation.resumeWithException(e)
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e("TAG", "Exception in onCaptureSuccess: $e")
+                        continuation.resumeWithException(e)
+                    } finally {
+                        image.close()
+                    }
+                }
+
+                override fun onError(exception: ImageCaptureException) {
+                    super.onError(exception)
+                    Log.e("TAG", "onError() called for capturePersistentPhoto with: exception = $exception")
+                    continuation.resumeWithException(exception)
+                }
+            }
+        )
+    }
+
 
 
 

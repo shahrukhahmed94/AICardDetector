@@ -46,6 +46,7 @@ import com.shahrukh.aicarddetector.manager.ObjectDetectionManagerImpl
 import com.shahrukh.aicarddetector.presentation.common.ImageButton
 import com.shahrukh.aicarddetector.presentation.home.components.CameraOverlay
 import com.shahrukh.aicarddetector.presentation.home.components.CameraPreview
+import com.shahrukh.aicarddetector.presentation.home.components.PersistentCameraOverlay
 import com.shahrukh.aicarddetector.presentation.home.components.RequestPermissions
 import com.shahrukh.aicarddetector.presentation.utils.CameraFrameAnalyzer
 import com.shahrukh.aicarddetector.presentation.utils.Constants
@@ -136,7 +137,9 @@ fun CardDetectorScreen() {
                     onPreviewSizeChanged = { /* Handle size changes */ }
                 )
             }
-            CameraOverlay(detections = detections.value)
+            //CameraOverlay(detections = detections.value)
+
+            PersistentCameraOverlay(detections = detections.value, bottomMargin = 20f)
         }
         // Bottom column with Capture-Image and Threshold Level Slider
         Column(
@@ -158,13 +161,25 @@ fun CardDetectorScreen() {
                         // Ensure you have a CoroutineScope (e.g., lifecycleScope or a ViewModel scope)
                         cameraController?.let {
                             CoroutineScope(Dispatchers.Main).launch {
-                                val croppedBitmap = ObjectDetectionManagerFactory.capturePhoto(
+
+                               /** val croppedBitmap = ObjectDetectionManagerFactory.capturePhoto(
                                     context = context,
                                     cameraController = it,
                                     screenWidth = screenWidth,
                                     screenHeight = screenHeight,
                                     detections = detections.value
-                                )
+                                )*/
+
+                               // Call the capturePersistentPhoto method instead of capturePhoto
+                               val croppedBitmap = ObjectDetectionManagerFactory.capturePersistentPhoto(
+                                   context = context,
+                                   cameraController = it,
+                                   screenWidth = screenWidth,
+                                   screenHeight = screenHeight,
+                                   bottomMargin = 20f  // Example top margin (adjust according to your UI)
+                               )
+
+
 
                                 croppedBitmap?.let { bitmap ->
                                     // Use the cropped bitmap here, for example:
