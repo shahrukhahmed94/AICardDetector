@@ -12,54 +12,43 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 
-/**
- * Composable function to draw a persistent detection box on the canvas.
- * This box will have a fixed size representing an ID card or a credit card.
- *
- * @param topMargin The margin from the top provided by the user, in pixels.
- */
 @Composable
-fun PersistentDrawDetectionBox(bottomMargin: Float = 0f) {
-
-    // Retrieve screen height dynamically using LocalContext
+fun PersistentDrawDetectionBox(
+    bottomMargin: Float = 0f,
+    leftRightPadding: Dp = 16.dp
+) {
     val context = LocalContext.current
-    val screenHeight = getScreenHeight(context)
+    val displayMetrics = context.resources.displayMetrics
 
-    // Define fixed size for the persistent box (in pixels, based on typical ID or credit card dimensions)
-    val fixedWidth = 600f  // Example width, adjust based on your screen
-    val fixedHeight = 420f // Example height, adjust based on your screen
+    val screenWidth = displayMetrics.widthPixels.toFloat()
+    val screenHeight = displayMetrics.heightPixels.toFloat()
 
-    // Calculate the dynamic Y position (half of the screen height minus half of the box height)
-    val dynamicTop = (screenHeight - fixedHeight) / 2f
+    // Convert padding to pixels
+    val horizontalPaddingPx = leftRightPadding.value * displayMetrics.density
 
-    // If user provides a top margin, subtract it from the dynamicTop
-    val adjustedTop = dynamicTop - bottomMargin
+    // Calculate box dimensions (1/3 height)
+    val boxWidth = screenWidth - (2 * horizontalPaddingPx)
+    val boxHeight = screenHeight / 3f
 
-    // Composable Box to hold the Canvas
+    // Position box in the center vertically
+    val topPosition = (screenHeight - boxHeight) / 2f
+
+    val adjustedTop = topPosition - bottomMargin
+
     Box(modifier = Modifier.fillMaxSize()) {
         Canvas(
             modifier = Modifier.matchParentSize(),
             onDraw = {
-                // Draw the persistent box with a fixed size at the adjusted top position
                 drawRect(
-                    color = Color.Red,  // You can change the color as needed
-                    size = Size(fixedWidth, fixedHeight),
-                    topLeft = Offset(50f, adjustedTop),  // Position on screen (adjusted)
-                    style = Stroke(width = 4f)  // Stroke width for the border
+                    color = Color.Red,
+                    size = Size(boxWidth, boxHeight),
+                    topLeft = Offset(horizontalPaddingPx, adjustedTop),
+                    style = Stroke(width = 4f)
                 )
             }
         )
     }
-}
-
-/**
- * Helper function to get the screen height
- */
-fun getScreenHeight(context: Context): Float {
-    val metrics = DisplayMetrics()
-    //context.resources.displayMetrics.getMetrics(metrics)
-    //return context.resources.displayMetrics.heightPixels.toFloat()
-
-    return  context.resources.displayMetrics.heightPixels.toFloat()
 }

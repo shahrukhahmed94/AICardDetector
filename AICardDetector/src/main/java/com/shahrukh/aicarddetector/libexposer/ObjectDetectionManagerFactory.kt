@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.res.Resources
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Matrix
 import android.graphics.Paint
@@ -14,6 +15,7 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.util.DisplayMetrics
 import android.util.Log
+import androidx.camera.core.AspectRatio
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
@@ -21,6 +23,8 @@ import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
 import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.viewModelScope
@@ -30,6 +34,7 @@ import com.shahrukh.aicarddetector.manager.ObjectDetectionManagerImpl
 import com.shahrukh.aicarddetector.presentation.utils.CameraFrameAnalyzer
 import com.shahrukh.aicarddetector.presentation.utils.Constants.capturedImageBit
 import com.shahrukh.aicarddetector.presentation.utils.Constants.originalImageBitmap
+import com.shahrukh.aicarddetector.utils.toPx
 
 
 import kotlinx.coroutines.CompletableDeferred
@@ -40,6 +45,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import java.io.InputStream
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -78,6 +84,10 @@ object ObjectDetectionManagerFactory {
                         CameraController.IMAGE_CAPTURE
 
             )
+
+
+
+
             setImageAnalysisAnalyzer(
                 ContextCompat.getMainExecutor(context),
                 cameraFrameAnalyzer
@@ -144,7 +154,6 @@ object ObjectDetectionManagerFactory {
 
 
     fun cropPersistentImage(bitmap: Bitmap, boundingBox: RectF, screenWidth: Float, screenHeight: Float): Bitmap {
-
         val originalWidth = bitmap.width
         val originalHeight = bitmap.height
 
@@ -177,7 +186,6 @@ object ObjectDetectionManagerFactory {
             adjustedBottom - adjustedTop
         )
     }
-
 
 
     /**
@@ -359,76 +367,107 @@ object ObjectDetectionManagerFactory {
         cameraController: LifecycleCameraController,
         screenWidth: Float,
         screenHeight: Float,
-        bottomMargin: Float // The bottom margin is provided to adjust the capture box position
+        bottomMargin: Float,
+        previewWeight: Float // New parameter to handle scaling
     ): Bitmap? = suspendCoroutine { continuation ->
         cameraController.takePicture(
             ContextCompat.getMainExecutor(context),
             object : ImageCapture.OnImageCapturedCallback() {
-
                 override fun onCaptureSuccess(image: ImageProxy) {
-                    super.onCaptureSuccess(image)
-                    Log.d("TAG", "onCaptureSuccess() called for capturePersistentPhoto")
-
                     try {
                         val rotatedImageMatrix = Matrix().apply {
                             postRotate(image.imageInfo.rotationDegrees.toFloat())
                         }
 
-                        // Convert the captured image to a Bitmap
+                        // Convert to bitmap with original camera resolution
+                        val originalBitmap = image.toBitmap()
                         val rotatedBitmap = Bitmap.createBitmap(
-                            image.toBitmap(),
-                            0,
-                            0,
-                            image.width,
-                            image.height,
+                            originalBitmap,
+                            0, 0,
+                            originalBitmap.width,
+                            originalBitmap.height,
                             rotatedImageMatrix,
                             true
                         )
 
-                        // Define the persistent detection box's size and position
-                        val fixedWidth = 600f  // Width of the persistent box
-                        val fixedHeight = 420f // Height of the persistent box
-                       // val dynamicTop = ((screenHeight - fixedHeight) / 2f) - bottomMargin  // Adjust top position based on margin
+                        // Calculate preview height scaling factor
+                        val previewHeight = screenHeight * previewWeight
+                        val previewOffset = (screenHeight - previewHeight) / 2f // Offset added at the top
 
-                        val dynamicTop = ((screenHeight - fixedHeight) / 2f) - bottomMargin
+                        // Dynamic box dimensions (1/3 of the preview height)
+                        val displayMetrics = context.resources.displayMetrics
+                        val leftRightPadding: Dp = 16.dp
+                        val horizontalPaddingPx = leftRightPadding.value * displayMetrics.density
+                       /** val boxWidth = screenWidth - (2 * horizontalPaddingPx)
 
+                        val boxHeight = previewHeight / 3f
+                        val boxTop = (previewHeight - boxHeight) / 2f + previewOffset
 
-                        val left = 50f  // Left margin for the persistent box
+                        // Precise scaling calculation
+                        val scaleX = rotatedBitmap.width / screenWidth
+                        val scaleY = rotatedBitmap.height / previewHeight
 
-                        Log.i("Dynamic Top Lib:",dynamicTop.toString())
-                        // Define the bounding box for cropping (use the same dimensions as the detection box)
-                        val boundingBox = RectF(
-                            left,
-                            dynamicTop + 80f,
-                            left + fixedWidth,
+                        // Convert box coordinates to bitmap coordinates
+                        val bitmapLeft = ((horizontalPaddingPx) * scaleX).toInt()
+                        val bitmapTop = ((boxTop) * scaleY).toInt()
+                        val bitmapWidth = ((boxWidth) * scaleX).toInt()
+                        val bitmapHeight = ((boxHeight) * scaleY).toInt()*/
 
-                            dynamicTop + fixedHeight
-                        )
+                       val boxHeight = previewHeight / 3f
+                        val boxTop = (previewHeight - boxHeight) / 2f + previewOffset
 
-                        // Crop the image based on the bounding box
-                        val croppedBitmap = cropPersistentImage(
+                        val scaleY = rotatedBitmap.height / previewHeight
+                        val bitmapTop = ((boxTop) * scaleY).toInt()
+
+                     // Assume persistent box is 70% of the screen width and 30% of screen height
+                     val boxWidthPercentage = 0.7f
+                        val boxHeightPercentage = 0.3f
+
+// Calculate box size and position based on screen dimensions
+                        val boxWidth = screenWidth * boxWidthPercentage
+                       // val boxHeight = screenHeight * boxHeightPercentage
+                        val xPosition = screenWidth * 0.15f // 15% padding from the left
+                        //val yPosition = (screenHeight - boxHeight) / 2f
+
+// Convert these values to pixels using scale factors
+                        val scaleX = rotatedBitmap.width / screenWidth
+                      //  val scaleY = rotatedBitmap.height / screenHeight
+
+// Calculate the bitmap crop area using scaled values
+                        val bitmapLeft = (xPosition * scaleX).toInt()
+                       // val bitmapTop = (yPosition * scaleY).toInt()
+                        val bitmapWidth = (boxWidth * scaleX).toInt()
+                        val bitmapHeight = (boxHeight * scaleY).toInt()
+
+// Now crop the image using dynamic values
+                        val croppedBitmap = Bitmap.createBitmap(
                             rotatedBitmap,
-                            boundingBox,
-                            screenWidth,
-                            screenHeight
+                            bitmapLeft,
+                            bitmapTop,
+                            bitmapWidth,
+                            bitmapHeight
                         )
 
-                        // Save cropped bitmap asynchronously
+
+                        // Crop with precise bitmap coordinates
+                        /**val croppedBitmap = Bitmap.createBitmap(
+                            rotatedBitmap,
+                           // bitmapLeft, //160
+                              390,
+                            bitmapTop,
+                            2200,
+                           // bitmapWidth, //3806
+                            bitmapHeight //1032
+                        )*/
+
+                        // Save and resume
                         CoroutineScope(Dispatchers.IO).launch {
-                            try {
-                                saveBitmapToDevice(context, croppedBitmap)
-                                withContext(Dispatchers.Main) {
-                                    continuation.resume(croppedBitmap)
-                                }
-                            } catch (e: Exception) {
-                                Log.e("TAG", "Failed to save or process the image: $e")
-                                withContext(Dispatchers.Main) {
-                                    continuation.resumeWithException(e)
-                                }
+                            saveBitmapToDevice(context, croppedBitmap)
+                            withContext(Dispatchers.Main) {
+                                continuation.resume(croppedBitmap)
                             }
                         }
                     } catch (e: Exception) {
-                        Log.e("TAG", "Exception in onCaptureSuccess: $e")
                         continuation.resumeWithException(e)
                     } finally {
                         image.close()
@@ -436,8 +475,6 @@ object ObjectDetectionManagerFactory {
                 }
 
                 override fun onError(exception: ImageCaptureException) {
-                    super.onError(exception)
-                    Log.e("TAG", "onError() called for capturePersistentPhoto with: exception = $exception")
                     continuation.resumeWithException(exception)
                 }
             }
@@ -446,6 +483,21 @@ object ObjectDetectionManagerFactory {
 
 
 
+
+
+
+
+
+
+    fun uriToBitmap(context: Context, uri: Uri): Bitmap? {
+        return try {
+            val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
+            BitmapFactory.decodeStream(inputStream)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
 
 
 

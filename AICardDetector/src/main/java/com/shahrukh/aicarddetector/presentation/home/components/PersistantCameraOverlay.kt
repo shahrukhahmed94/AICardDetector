@@ -18,11 +18,13 @@ import com.shahrukh.aicarddetector.presentation.common.PersistentDrawDetectionBo
 fun PersistentCameraOverlay(detections: List<Detection>,bottomMargin: Float = 0f) {
     Box(modifier = Modifier.fillMaxSize()) {
         // Draw the persistent detection box first (this will be static on the screen)
+        //PersistentDrawDetectionBox()
+
         PersistentDrawDetectionBox(bottomMargin = bottomMargin)
 
         // Then, draw dynamic detection boxes based on AI detections
-       // detections.forEach { detection ->
-         //   DrawDetectionBox(detection)
-       // }
+        /**detections.forEach { detection ->
+            DrawDetectionBox(detection)
+        }*/
     }
 }
