@@ -41,6 +41,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.shahrukh.aicarddetector.domain.model.Detection
 import com.shahrukh.aicarddetector.libexposer.CameraFrameAnalyzerFactory
 import com.shahrukh.aicarddetector.libexposer.CropImageBox
@@ -87,6 +90,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+//Below commented code is for Real time card detection
 /**@Composable
 fun CardDetectorScreen() {
     val context = LocalContext.current
@@ -223,6 +227,11 @@ fun CardDetectorScreen() {
 */
 @Composable
 fun CardDetectorScreen() {
+
+    val textRecognizer = remember {
+        TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+    }
+
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -343,7 +352,28 @@ fun CardDetectorScreen() {
                                     if (croppedBitmap != null) {
                                         capturedBitmap = croppedBitmap
                                         showCropBox = true
+
                                         Toast.makeText(context, "Photo captured successfully!", Toast.LENGTH_SHORT).show()
+
+
+                                        // Run OCR on the captured bitmap
+                                        val inputImage = InputImage.fromBitmap(capturedBitmap!!, 0)
+
+                                        textRecognizer.process(inputImage)
+                                            .addOnSuccessListener { visionText ->
+                                                // Handle recognized text
+                                                val detectedText = visionText.text
+                                                Log.d("OCR", "Recognized Text: $detectedText")
+
+                                                Toast.makeText(context, "Text: $detectedText", Toast.LENGTH_LONG).show()
+                                            }
+                                            .addOnFailureListener { e ->
+                                                // Handle failure
+                                                Log.e("OCR", "Text recognition failed", e)
+                                                Toast.makeText(context, "Failed to recognize text.", Toast.LENGTH_SHORT).show()
+                                            }
+
+
                                     } else {
                                         Toast.makeText(context, "Failed to capture photo.", Toast.LENGTH_SHORT).show()
                                     }

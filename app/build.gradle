@@ -67,6 +67,10 @@ dependencies {
     // Accompanist Permission manager Dependency
     implementation("com.google.accompanist:accompanist-permissions:0.33.2-alpha")
 
+    //text recognition lib
+    //text recogninition lib
+    implementation 'com.google.mlkit:text-recognition:16.0.1'
+
 
     testImplementation libs.junit
     androidTestImplementation libs.androidx.junit
