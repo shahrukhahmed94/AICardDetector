@@ -283,6 +283,7 @@ Please adhere to the following guidelines when contributing to this project:
 If you find a bug or have an enhancement request, feel free to open an issue in the repository. Please provide as much detail as possible, including:
 
 - Steps to reproduce the issue.
+- 
 - Device information (model, OS version).
 - Log files or error messages (if any).
 - Screenshots (if applicable).
