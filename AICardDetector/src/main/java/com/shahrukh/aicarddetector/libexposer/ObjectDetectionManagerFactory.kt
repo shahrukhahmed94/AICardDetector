@@ -394,52 +394,25 @@ object ObjectDetectionManagerFactory {
                         val previewHeight = screenHeight * previewWeight
                         val previewOffset = (screenHeight - previewHeight) / 2f // Offset added at the top
 
-                        // Dynamic box dimensions (1/3 of the preview height)
-                        val displayMetrics = context.resources.displayMetrics
-                        val leftRightPadding: Dp = 16.dp
-                        val horizontalPaddingPx = leftRightPadding.value * displayMetrics.density
-                       /** val boxWidth = screenWidth - (2 * horizontalPaddingPx)
+                        val density = context.resources.displayMetrics.density
+                        val horizontalPaddingPx = 24f * density
 
-                        val boxHeight = previewHeight / 3f
-                        val boxTop = (previewHeight - boxHeight) / 2f + previewOffset
+                        // Calculate box dimensions (standard card aspect ratio ~1.58:1)
+                        val boxWidth = screenWidth - (2 * horizontalPaddingPx)
+                        val boxHeight = boxWidth / 1.58f
 
-                        // Precise scaling calculation
-                        val scaleX = rotatedBitmap.width / screenWidth
-                        val scaleY = rotatedBitmap.height / previewHeight
+                        // Position box vertically in the preview frame (same centering logic)
+                        val boxTop = (previewHeight - boxHeight) / 2f - bottomMargin
 
-                        // Convert box coordinates to bitmap coordinates
-                        val bitmapLeft = ((horizontalPaddingPx) * scaleX).toInt()
-                        val bitmapTop = ((boxTop) * scaleY).toInt()
-                        val bitmapWidth = ((boxWidth) * scaleX).toInt()
-                        val bitmapHeight = ((boxHeight) * scaleY).toInt()*/
+                        // Convert display coordinates to rotated bitmap coordinates
+                        val scaleX = rotatedBitmap.width.toFloat() / screenWidth
+                        val scaleY = rotatedBitmap.height.toFloat() / previewHeight
 
-                       val boxHeight = previewHeight / 3f
-                        val boxTop = (previewHeight - boxHeight) / 2f + previewOffset
+                        val bitmapLeft = (horizontalPaddingPx * scaleX).toInt().coerceIn(0, rotatedBitmap.width)
+                        val bitmapTop = (boxTop * scaleY).toInt().coerceIn(0, rotatedBitmap.height)
+                        val bitmapWidth = (boxWidth * scaleX).toInt().coerceIn(0, rotatedBitmap.width - bitmapLeft)
+                        val bitmapHeight = (boxHeight * scaleY).toInt().coerceIn(0, rotatedBitmap.height - bitmapTop)
 
-                        val scaleY = rotatedBitmap.height / previewHeight
-                        val bitmapTop = ((boxTop) * scaleY).toInt()
-
-                     // Assume persistent box is 70% of the screen width and 30% of screen height
-                     val boxWidthPercentage = 0.7f
-                        val boxHeightPercentage = 0.3f
-
-// Calculate box size and position based on screen dimensions
-                        val boxWidth = screenWidth * boxWidthPercentage
-                       // val boxHeight = screenHeight * boxHeightPercentage
-                        val xPosition = screenWidth * 0.15f // 15% padding from the left
-                        //val yPosition = (screenHeight - boxHeight) / 2f
-
-// Convert these values to pixels using scale factors
-                        val scaleX = rotatedBitmap.width / screenWidth
-                      //  val scaleY = rotatedBitmap.height / screenHeight
-
-// Calculate the bitmap crop area using scaled values
-                        val bitmapLeft = (xPosition * scaleX).toInt()
-                       // val bitmapTop = (yPosition * scaleY).toInt()
-                        val bitmapWidth = (boxWidth * scaleX).toInt()
-                        val bitmapHeight = (boxHeight * scaleY).toInt()
-
-// Now crop the image using dynamic values
                         val croppedBitmap = Bitmap.createBitmap(
                             rotatedBitmap,
                             bitmapLeft,

@@ -57,16 +57,14 @@ dependencies {
     implementation libs.androidx.ui.tooling.preview
     implementation libs.androidx.material3
 
-
-
-
-
-    //My Lib
+    // My Lib
     //implementation("com.github.shahrukhahmed94:AICardDetector:1.0.3")
     implementation project(':AICardDetector')
     // Accompanist Permission manager Dependency
     implementation("com.google.accompanist:accompanist-permissions:0.33.2-alpha")
 
+    // ML Kit Text Recognition
+    implementation 'com.google.android.gms:play-services-mlkit-text-recognition:19.0.0'
 
     testImplementation libs.junit
     androidTestImplementation libs.androidx.junit
